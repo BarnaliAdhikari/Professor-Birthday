@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, Professor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Patrick+Hand&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --chalk-white: #eeeeee;
+            --chalk-yellow: #fef08a;
+            --chalk-blue: #bfdbfe;
+            --board-bg: #2d3748;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background-color: #262626;
+            color: var(--chalk-white);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #3a3a3a 0%, #1a1a1a 100%);
+            padding-bottom: 40px;
+        }
+
+        .chalkboard {
+            background-color: #1a3c34;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
+            border: 12px solid #5d4037;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .chalk-tray {
+            background: #5d4037;
+            height: 20px;
+            width: 100%;
+            margin-top: -12px;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        .chalk-piece {
+            width: 40px;
+            height: 8px;
+            background: white;
+            border-radius: 2px;
+            position: absolute;
+            top: -4px;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Gloria Hallelujah', cursive;
+        }
+
+        .chalk-text {
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2); 
+        }
+
+        .sticky-note {
+            color: #333;
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            transform: rotate(-1deg);
+            box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+            position: relative;
+            background-color: #fef08a;
+            z-index: 10;
+        }
+        
+        .sticky-note::after {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 20px;
+            background-color: rgba(255,255,255,0.4);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .polaroid {
+            background: white;
+            padding: 1rem 1rem 3rem 1rem;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+            transform: rotate(3deg);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+            margin: 0 auto;
+            color: #333;
+            text-align: center;
+        }
+        .polaroid:hover {
+            transform: rotate(0deg) scale(1.02);
+            z-index: 20;
+        }
+
+        .paperclip {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #aaa;
+            border-radius: 20px;
+            border-bottom: none;
+            transform: rotate(15deg);
+            z-index: 25;
+        }
+
+        .perspective-1000 { perspective: 1000px; }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .flashcard-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flashcard-front {
+            background-color: #2d3748;
+            border: 2px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        .flashcard-back {
+            background-color: #fef08a;
+            color: #333;
+            transform: rotateY(180deg);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .lined-paper {
+            background-color: #fdfbf7;
+            background-image: linear-gradient(#e1e1e1 1px, transparent 1px);
+            background-size: 100% 1.5rem;
+            line-height: 1.5rem;
+            padding: 3rem 2rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+            transform: rotate(1deg);
+        }
+        .lined-paper::before {
+            content: '';
+            position: absolute;
+            left: 3rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #f8a5c2;
+        }
+        .tape {
+            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            width: 100px;
+            height: 25px;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            rotate: -2deg;
+            z-index: 20;
+            backdrop-filter: blur(2px);
+        }
+
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            background: #000;
+            color: #0f0;
+            font-family: 'Fira Code', monospace;
+            padding: 8px 0;
+            border-top: 2px solid #333;
+            width: 100%;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 30s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        #intro-overlay {
+            background-color: #1a1a1a;
+            background-image: radial-gradient(circle at 50% 50%, #2d3748 0%, #000000 100%);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s cubic-bezier(0.5, 0, 0, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 14px;
+            }
+            ::-webkit-scrollbar-track {
+                background-color: #262626;
+                border-left: 1px solid #333;
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: #5d4037; 
+                border-radius: 7px;
+                border: 3px solid #262626; 
+                background-clip: content-box;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: #8d6e63;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div id="intro-overlay" class="fixed inset-0 z-[60] flex flex-col items-center justify-center transition-opacity duration-1000">
+        <div class="text-center p-8 max-w-lg w-full">
+            <div class="mb-8">
+                <i class="fas fa-microchip text-6xl text-yellow-300 mb-4 animate-bounce"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-['Gloria_Hallelujah'] text-yellow-200 mb-8 leading-relaxed">
+                Who's the Birthday Star?
+            </h1>
+            <input type="text" id="profNameInput" placeholder="e.g. Professor ABC" 
+                   class="w-full bg-white/10 border-b-2 border-yellow-200 text-white text-3xl p-4 mb-6 text-center focus:outline-none focus:bg-white/20 transition-colors duration-300 font-['Patrick_Hand'] placeholder-gray-400" autocomplete="off"
+                   onkeypress="handleKeyPress(event)">
+            
+            <!-- NEW: Image Upload Area -->
+            <div class="w-full mb-10">
+                <label id="upload-container" for="profImageInput" class="cursor-pointer flex flex-col items-center justify-center w-full h-32 border-2 border-yellow-200 border-dashed rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 group">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i id="upload-icon" class="fas fa-cloud-upload-alt text-3xl text-yellow-200 mb-2 group-hover:scale-110 transition-transform"></i>
+                        <p id="upload-text" class="mb-1 text-yellow-100/90 font-['Patrick_Hand'] text-xl">Upload a photo (Required)</p>
+                    </div>
+                    <input id="profImageInput" type="file" class="hidden" accept="image/*" onchange="previewImage(event)" />
+                </label>
+                <p id="upload-error" class="hidden text-red-400 font-sans text-sm mt-2 font-bold animate-pulse">⚠️ Please upload a photo to continue!</p>
+            </div>
+
+            <button onclick="startCelebration()" 
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-['Patrick_Hand'] text-2xl py-4 px-10 rounded-full shadow-[0_0_20px_rgba(202,138,4,0.5)] transform transition hover:scale-105 active:scale-95 border-2 border-yellow-400">
+                Execute Celebration() 🚀
+            </button>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden w-full flex flex-col items-center flex-grow">
+        
+        <div id="scroll-indicator" class="fixed bottom-20 right-8 z-40 hidden md:flex flex-col items-center animate-bounce opacity-0 transition-opacity duration-1000 pointer-events-none">
+            <span class="text-yellow-100/50 text-xs font-mono mb-2">SCROLL</span>
+            <i class="fas fa-chevron-down text-2xl text-yellow-100/50"></i>
+        </div>
+
+        <main class="w-full max-w-6xl chalkboard p-6 md:p-12 mb-8 mx-auto flex-grow flex flex-col items-center">
+            
+            <header class="text-center mb-12 relative w-full reveal">
+                <div class="absolute top-0 left-0 opacity-50 hidden md:block text-5xl rotate-[-15deg]">
+                    <i class="fas fa-project-diagram text-white/20"></i> <!-- DSA icon -->
+                </div>
+                <div class="absolute top-0 right-0 opacity-50 hidden md:block text-5xl rotate-[15deg]">
+                    <i class="fas fa-code text-white/20"></i> <!-- Web Dev icon -->
+                </div>
+
+                <h2 class="text-2xl md:text-3xl text-gray-300 mb-2 opacity-80">To my favorite mentor...</h2>
+                <h1 class="text-5xl md:text-7xl lg:text-8xl mb-6 chalk-text tracking-wider">
+                    Happy Birthday <br>
+                    <span id="prof-name-display" class="text-yellow-200">ABC Ma'am</span>
+                </h1>
+                
+                <div class="flex justify-center items-center space-x-2 text-xl md:text-2xl text-blue-200 mt-4">
+                    <span>~ From Your Student ~</span>
+                </div>
+
+                <div class="mt-10 transform hover:scale-105 transition duration-500">
+                    <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="mx-auto drop-shadow-2xl">
+                        <defs>
+                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        
+                        <ellipse cx="100" cy="170" rx="70" ry="12" fill="#525252" />
+                        <rect x="85" y="170" width="30" height="15" fill="#404040" />
+                        <ellipse cx="100" cy="185" rx="35" ry="6" fill="#303030" />
+
+                        <path d="M40,135 Q40,160 100,160 Q160,135 160,135 L160,105 Q160,130 100,130 Q40,130 40,105 Z" fill="#a78bfa" stroke="#fff" stroke-width="2" stroke-dasharray="5,2"/> 
+                        <ellipse cx="100" cy="105" rx="60" ry="25" fill="#8b5cf6" /> 
+
+                        <path d="M55,100 Q55,120 100,120 Q145,120 145,100 L145,70 Q145,90 100,90 Q55,90 55,70 Z" fill="#f472b6" stroke="#fff" stroke-width="2" /> 
+                        
+                        <path d="M55,70 Q55,50 100,50 Q145,50 145,70 Q135,80 125,70 Q115,80 100,70 Q85,80 75,70 Q65,80 55,70 Z" fill="#fbcfe8" />
+                        
+                        <rect x="96" y="35" width="8" height="35" fill="#fcd34d" stroke="#fff" stroke-width="1"/>
+                        
+                        <path d="M100,35 Q105,25 100,10 Q95,25 100,35" fill="#ef4444" filter="url(#glow)">
+                            <animate attributeName="d" values="M100,35 Q105,25 100,10 Q95,25 100,35; M100,35 Q108,25 100,5 Q92,25 100,35; M100,35 Q105,25 100,10 Q95,25 100,35" dur="0.8s" repeatCount="indefinite" />
+                            <animate attributeName="fill" values="#ef4444;#f59e0b;#ef4444" dur="0.4s" repeatCount="indefinite" />
+                        </path>
+                    </svg>
+                </div>
+            </header>
+
+            <div class="reveal border-2 border-dashed border-white/20 p-6 rounded-lg max-w-3xl mx-auto mb-16 text-center rotate-1 transform w-full">
+                <p class="text-2xl md:text-3xl italic text-gray-300">
+                    Happy birthday to a teacher who brings out the best in every student, from front-end to back-end, and logic gates to binary trees.
+                </p>
+                <p class="text-right mt-4 text-gray-400">- Shubham</p>
+            </div>
+
+            <section class="reveal w-full max-w-3xl mb-16 px-4">
+                <div class="bg-gray-900 rounded-lg shadow-xl overflow-hidden border border-gray-700 font-mono text-sm md:text-base" style="font-family: 'Fira Code', monospace;">
+                    <div class="bg-gray-800 px-4 py-2 flex items-center space-x-2 border-b border-gray-700">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span class="ml-2 text-gray-400 text-xs">bash - api-request</span>
+                    </div>
+                    <div class="p-6 text-green-400 leading-relaxed overflow-x-auto">
+                        <div class="flex">
+                            <span class="mr-2 text-blue-400 font-bold">~</span>
+                            <span class="mr-2 text-gray-500">$</span>
+                            <span id="typewriter" class="text-white break-all"></span><span class="cursor-blink bg-white w-2 h-5 inline-block ml-1 align-middle"></span>
+                        </div>
+                        <div id="terminal-output" class="mt-4 hidden">
+                            <p class="text-gray-400 mb-2">Connecting to server... <span class="text-green-400">200 OK</span></p>
+                            <p class="text-gray-400 mb-2">Fetching payload... <span class="text-green-400">Done</span></p>
+                            <p><span class="text-yellow-300">{</span></p>
+                            <p class="pl-4 md:pl-8"><span class="text-cyan-300">"status"</span>: <span class="text-orange-400">"Success"</span>,</p>
+                            <p class="pl-4 md:pl-8"><span class="text-cyan-300">"target"</span>: <span class="text-green-300" id="json-prof-name">"Professor"</span>,</p>
+                            <p class="pl-4 md:pl-8"><span class="text-cyan-300">"courses_loaded"</span>: <span class="text-purple-400">[</span></p>
+                            <p class="pl-8 md:pl-16 text-green-300">"Digital Electronics"<span class="text-white">,</span></p>
+                            <p class="pl-8 md:pl-16 text-green-300">"Web Development"<span class="text-white">,</span></p>
+                            <p class="pl-8 md:pl-16 text-green-300">"Software Engineering"<span class="text-white">,</span></p>
+                            <p class="pl-8 md:pl-16 text-green-300">"Data Structures & Algorithms"</p>
+                            <p class="pl-4 md:pl-8"><span class="text-purple-400">]</span>,</p>
+                            <p class="pl-4 md:pl-8"><span class="text-cyan-300">"metrics"</span>: <span class="text-purple-400">{</span></p>
+                            <p class="pl-8 md:pl-16"><span class="text-cyan-300">"bugs_found"</span>: <span class="text-orange-400">0</span>,</p>
+                            <p class="pl-8 md:pl-16"><span class="text-cyan-300">"joy_overflow"</span>: <span class="text-orange-400">true</span>,</p>
+                            <p class="pl-8 md:pl-16"><span class="text-cyan-300">"time_complexity"</span>: <span class="text-green-300">"O(1)"</span></p>
+                            <p class="pl-4 md:pl-8"><span class="text-purple-400">}</span></p>
+                            <p><span class="text-yellow-300">}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="reveal w-full max-w-4xl mb-16">
+                <h3 class="text-3xl text-center mb-8 text-white/90 border-b border-white/10 pb-2 inline-block mx-auto">Pop Quiz: Fun Facts</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- Digital Electronics Flashcard -->
+                    <div class="perspective-1000 h-48" onclick="flipCard(this)">
+                        <div class="flashcard-inner h-full">
+                            <div class="flashcard-front">
+                                <div>
+                                    <i class="fas fa-microchip text-3xl mb-2 text-yellow-200 block"></i>
+                                    <span class="text-xl font-mono">1 AND 1 = ?</span>
+                                </div>
+                            </div>
+                            <div class="flashcard-back font-mono text-sm">
+                                An unconditionally TRUE Birthday!<br>
+                                (Logic Level: HIGH)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DSA Flashcard -->
+                    <div class="perspective-1000 h-48" onclick="flipCard(this)">
+                        <div class="flashcard-inner h-full">
+                            <div class="flashcard-front">
+                                <div>
+                                    <i class="fas fa-project-diagram text-3xl mb-2 text-yellow-200 block"></i>
+                                    <span class="text-xl font-mono">O(1) Complexity</span>
+                                </div>
+                            </div>
+                            <div class="flashcard-back font-mono text-sm">
+                                The speed at which you solve our doubts and bugs!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Web Dev Flashcard -->
+                    <div class="perspective-1000 h-48" onclick="flipCard(this)">
+                        <div class="flashcard-inner h-full">
+                            <div class="flashcard-front">
+                                <div>
+                                    <i class="fas fa-code text-3xl mb-2 text-yellow-200 block"></i>
+                                    <span class="text-xl font-mono">&lt;body&gt;...&lt;/body&gt;</span>
+                                </div>
+                            </div>
+                            <div class="flashcard-back font-mono text-sm">
+                                Filled with 100% pure joy & perfectly centered divs!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Software Engineering Flashcard -->
+                    <div class="perspective-1000 h-48" onclick="flipCard(this)">
+                        <div class="flashcard-inner h-full">
+                            <div class="flashcard-front">
+                                <div>
+                                    <i class="fas fa-code-branch text-3xl mb-2 text-yellow-200 block"></i>
+                                    <span class="text-xl font-mono">Agile Method</span>
+                                </div>
+                            </div>
+                            <div class="flashcard-back font-mono text-sm">
+                                Sprinting towards another amazing and successful year!
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <p class="text-center text-gray-400 text-sm mt-4">(Click cards to flip)</p>
+            </section>
+
+            <section class="reveal w-full max-w-4xl mb-16 text-center">
+                <h3 class="text-2xl mb-6 text-white/90 border-b border-white/10 pb-2 inline-block">Classroom Metrics</h3>
+                <div class="flex justify-center items-end space-x-8 h-56 border-l-2 border-b-2 border-white/30 p-4 w-11/12 md:w-3/4 mx-auto relative mt-4">
+                    <div class="absolute -left-16 top-1/2 -rotate-90 text-sm text-gray-300 font-sans tracking-widest">UNDERSTANDING</div>
+                    
+                    <div class="w-16 bg-blue-400/10 border-2 border-blue-300/50 rounded-t-sm h-1/4 relative group transition-all duration-500 hover:h-1/3 hover:bg-blue-400/20">
+                        <div class="absolute -top-8 w-full text-center text-blue-200 opacity-0 group-hover:opacity-100 transition">25%</div>
+                        <span class="absolute -bottom-12 left-0 w-full text-sm text-gray-300 leading-tight">Before<br>Class</span>
+                    </div>
+                    
+                    <div class="w-16 bg-yellow-400/20 border-2 border-yellow-300 rounded-t-sm h-full relative group shadow-[0_0_15px_rgba(253,224,71,0.2)]">
+                        <div class="absolute -top-8 w-full text-center text-yellow-200 font-bold">100%</div>
+                        <span class="absolute -bottom-12 left-0 w-full text-sm text-yellow-200 font-bold leading-tight">Your<br>Lecture</span>
+                        <i class="fas fa-star text-yellow-200 absolute -top-12 left-1/2 -translate-x-1/2 animate-bounce"></i>
+                    </div>
+                    
+                    <div class="w-16 bg-red-400/10 border-2 border-red-300/50 rounded-t-sm h-1/2 relative group transition-all duration-500 hover:h-3/5 hover:bg-red-400/20">
+                        <div class="absolute -top-8 w-full text-center text-red-200 opacity-0 group-hover:opacity-100 transition">50%</div>
+                        <span class="absolute -bottom-12 left-0 w-full text-sm text-gray-300 leading-tight">During<br>Exam</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="reveal w-full max-w-3xl mb-16 relative">
+                <div class="lined-paper text-gray-800 font-handwriting text-lg md:text-xl transform rotate-1 hover:rotate-0 transition duration-300">
+                    <div class="tape"></div>
+                    <h3 class="text-2xl font-bold text-center mb-6 font-serif text-gray-900 border-b-2 border-gray-300 pb-2 mx-6 md:mx-10">Syllabus: The Year Ahead</h3>
+                    <ul class="list-none pl-4 md:pl-12 space-y-4">
+                        <li class="flex flex-col md:flex-row md:items-start">
+                            <span class="font-bold mr-2 w-32 text-indigo-700">Digital Elec:</span> 
+                            <span>Building Flip-Flops to toggle sadness OFF (0) and joy ON (1).</span>
+                        </li>
+                        <li class="flex flex-col md:flex-row md:items-start">
+                            <span class="font-bold mr-2 w-32 text-indigo-700">Web Dev:</span> 
+                            <span class="font-mono text-sm md:text-base bg-gray-100 px-1 rounded text-red-600">&lt;div id="happiness" class="w-full h-full"&gt;</span>
+                        </li>
+                        <li class="flex flex-col md:flex-row md:items-start">
+                            <span class="font-bold mr-2 w-32 text-indigo-700">DSA:</span> 
+                            <span>Optimizing the shortest path to the Birthday Cake (Dijkstra approved).</span>
+                        </li>
+                        <li class="flex flex-col md:flex-row md:items-start">
+                            <span class="font-bold mr-2 w-32 text-indigo-700">Software Eng:</span> 
+                            <span>Deploying Birthday Protocol v2.0 (Zero downtime, fully Agile).</span>
+                        </li>
+                    </ul>
+                    <div class="mt-8 text-right font-cursive text-red-600 transform -rotate-6 text-2xl font-bold">
+                        Grade: A+ (Approved)
+                    </div>
+                </div>
+            </section>
+
+            <!-- NEW ELEMENT 1: Git Commit History -->
+            <section class="reveal w-full max-w-3xl mb-16 px-4">
+                <h3 class="text-3xl text-center mb-8 text-white/90 border-b border-white/10 pb-2 inline-block mx-auto font-['Gloria_Hallelujah']">Git Commit History</h3>
+                <div class="relative border-l-4 border-green-500/50 ml-4 md:ml-12 space-y-8 font-mono text-sm md:text-base">
+                    
+                    <!-- Commit 1 -->
+                    <div class="relative pl-8 group transform hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -left-[14px] top-1 w-6 h-6 bg-gray-800 border-4 border-green-400 rounded-full group-hover:scale-125 group-hover:bg-green-400 transition-all shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+                        <div class="text-green-400 mb-1">commit <span class="text-yellow-300">b1r7hd4y</span></div>
+                        <div class="bg-gray-800/80 p-4 rounded-lg border border-gray-700 shadow-lg group-hover:border-green-500/50 transition-colors">
+                            <p class="text-white">git merge <span class="text-blue-300">wisdom</span> into <span class="text-purple-300">student_brains</span></p>
+                            <p class="text-gray-400 text-xs mt-2">-- Fast-forwarded the learning process without any merge conflicts.</p>
+                        </div>
+                    </div>
+
+                    <!-- Commit 2 -->
+                    <div class="relative pl-8 group transform hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -left-[14px] top-1 w-6 h-6 bg-gray-800 border-4 border-blue-400 rounded-full group-hover:scale-125 group-hover:bg-blue-400 transition-all shadow-[0_0_10px_rgba(96,165,250,0.5)]"></div>
+                        <div class="text-blue-400 mb-1">commit <span class="text-yellow-300">01010101</span></div>
+                        <div class="bg-gray-800/80 p-4 rounded-lg border border-gray-700 shadow-lg group-hover:border-blue-500/50 transition-colors">
+                            <p class="text-white">Refactored <span class="text-pink-400">Digital Electronics</span> lectures</p>
+                            <p class="text-gray-400 text-xs mt-2">-- Increased logic gate understanding by 100%. Toggled sadness to OFF.</p>
+                        </div>
+                    </div>
+
+                    <!-- Commit 3 -->
+                    <div class="relative pl-8 group transform hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -left-[14px] top-1 w-6 h-6 bg-gray-800 border-4 border-purple-400 rounded-full group-hover:scale-125 group-hover:bg-purple-400 transition-all shadow-[0_0_10px_rgba(192,132,252,0.5)]"></div>
+                        <div class="text-purple-400 mb-1">commit <span class="text-yellow-300">0_of_1</span></div>
+                        <div class="bg-gray-800/80 p-4 rounded-lg border border-gray-700 shadow-lg group-hover:border-purple-500/50 transition-colors">
+                            <p class="text-white">Optimized <span class="text-orange-400">DSA</span> problem-solving approach</p>
+                            <p class="text-gray-400 text-xs mt-2">-- Reduced doubt clearance time complexity to O(1).</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- NEW ELEMENT 2: Stack Overflow Mockup -->
+            <section class="reveal w-full max-w-4xl mb-20 px-4">
+                <div class="bg-[#1e1e1e] rounded-lg border border-gray-700 p-4 md:p-6 shadow-2xl relative overflow-hidden font-sans">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-yellow-500"></div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="flex flex-col items-center space-y-1 text-gray-400 mt-2">
+                            <i class="fas fa-caret-up text-4xl text-orange-400 hover:text-orange-300 cursor-pointer transition"></i>
+                            <span class="text-2xl font-bold text-gray-200">99k</span>
+                            <i class="fas fa-caret-down text-4xl hover:text-gray-300 cursor-pointer transition"></i>
+                        </div>
+                        
+                        <div class="w-full">
+                            <h3 class="text-xl md:text-2xl text-blue-400 font-bold mb-3 leading-tight">
+                                How to resolve "Uncaught Exception: Confusion" while studying Engineering?
+                            </h3>
+                            <div class="flex space-x-2 mb-4 text-xs font-mono">
+                                <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">software-engineering</span>
+                                <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">dsa</span>
+                                <span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded">web-dev</span>
+                            </div>
+                            
+                            <div class="bg-[#252526] p-4 md:p-5 rounded-md border-l-4 border-green-500 mt-6 shadow-inner relative">
+                                <div class="absolute -top-3 left-4 bg-[#1e1e1e] px-2 text-green-400 text-sm font-bold flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Accepted Answer
+                                </div>
+                                <p class="text-gray-300 text-base md:text-lg leading-relaxed mt-2">
+                                    The most efficient solution is to attend <strong class="text-white">ABC Ma'am's</strong> classes. She compiles the hardest concepts directly into your brain with <code class="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-pink-400 font-mono text-sm border border-gray-700">0 errors</code>. 
+                                </p>
+                                <p class="text-gray-300 text-base md:text-lg leading-relaxed mt-3">
+                                    Whether it's traversing a graph or building a full-stack app, she returns a <code class="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-yellow-300 font-mono text-sm border border-gray-700">Status: 200 OK</code> every single time!
+                                </p>
+                                <div class="mt-4 flex justify-end items-center gap-2 text-sm text-gray-400">
+                                    <span>answered just now by</span>
+                                    <span class="text-blue-400 hover:text-blue-300 cursor-pointer">Your Students</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-12 w-full items-center">
+                
+                <div class="relative">
+                    <div class="polaroid">
+                        <div class="paperclip"></div>
+                         <div style="height: 250px; background: #eee; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; overflow: hidden; position: relative;">
+                            <i id="polaroid-icon" class="fas fa-chalkboard-teacher text-6xl text-gray-400 z-10"></i>
+                            <img id="polaroid-image" src="" alt="Professor" class="absolute inset-0 w-full h-full object-cover hidden z-20">
+                         </div>
+                        <p class="font-bold font-serif text-lg">Best Mentor Ever</p>
+                    </div>
+                </div>
+
+                <div class="sticky-note">
+                    <h3 class="font-bold text-2xl mb-4 text-gray-800 border-b border-gray-400/30 pb-2">Dear Professor,</h3>
+                    <p class="mb-4 text-gray-800 leading-relaxed text-xl">
+                        Wishing you a fantastic birthday. Thank you for demystifying complex queries and making Python code actually make sense. Your classes are always the highlight of week.
+                    </p>
+                    <p class="mb-6 text-gray-800 leading-relaxed text-xl">
+                        May your day have zero runtime errors and infinite joy.
+                    </p>
+                    <div class="text-right">
+                        <p class="font-bold text-xl text-gray-900 font-cursive transform -rotate-2 inline-block border-b-2 border-gray-800">
+                            Sincerely, <br>
+                            Shubham
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <section class="reveal w-full max-w-xl mx-auto mt-24 mb-12 text-center">
+                <h3 class="text-3xl font-['Gloria_Hallelujah'] text-pink-300 mb-4 border-dashed border-b-2 border-white/20 pb-2 inline-block">Production Deployment: Cake v1.0 🎂</h3>
+                <p id="candle-instruction" class="text-gray-400 mb-8 font-mono text-sm group cursor-pointer transition-colors hover:text-white" onclick="blowOutCandles()">
+                    <span class="text-green-400">$</span> ./execute_blow_out_candles.sh <span class="animate-pulse font-bold text-white">_</span>
+                    <br><span class="text-xs text-gray-500 mt-2 block">(Click the cake to execute)</span>
+                </p>
+
+                <div class="relative w-64 h-64 mx-auto cursor-pointer transform transition hover:scale-105" onclick="blowOutCandles()">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-[0_0_20px_rgba(244,114,182,0.3)]">
+                        <!-- Plate -->
+                        <ellipse cx="100" cy="180" rx="85" ry="15" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+                        <ellipse cx="100" cy="177" rx="75" ry="12" fill="#4a5568" />
+
+                        <!-- Bottom Tier -->
+                        <rect x="40" y="120" width="120" height="55" rx="5" fill="#fbb6ce" />
+                        <path d="M40,120 Q100,135 160,120 L160,125 Q100,140 40,125 Z" fill="#f687b3" />
+                        <!-- Sprinkles Bottom -->
+                        <rect x="55" y="140" width="6" height="3" rx="1" fill="#d53f8c" transform="rotate(15 55 140)" />
+                        <rect x="85" y="160" width="6" height="3" rx="1" fill="#fff" transform="rotate(-20 85 160)" />
+                        <rect x="115" y="145" width="6" height="3" rx="1" fill="#d53f8c" transform="rotate(45 115 145)" />
+                        <rect x="140" y="155" width="6" height="3" rx="1" fill="#fff" transform="rotate(-10 140 155)" />
+
+                        <!-- Top Tier -->
+                        <rect x="60" y="70" width="80" height="50" rx="5" fill="#fdf2f8" />
+                        <path d="M60,70 Q100,85 140,70 L140,80 Q100,95 60,80 Z" fill="#fbcfe8" />
+                        <!-- Icing Drips -->
+                        <path d="M60,70 Q70,95 80,70 Q90,85 100,70 Q110,95 120,70 Q130,85 140,70 L140,65 L60,65 Z" fill="#63b3ed" /> 
+                        <!-- Sprinkles Top -->
+                        <circle cx="75" cy="100" r="2.5" fill="#ecc94b" />
+                        <circle cx="100" cy="90" r="2.5" fill="#48bb78" />
+                        <circle cx="125" cy="105" r="2.5" fill="#ecc94b" />
+
+                        <!-- Candles -->
+                        <rect x="75" y="40" width="6" height="30" rx="1" fill="#fbd38d" />
+                        <rect x="75" y="45" width="6" height="4" fill="#ed8936" />
+                        <rect x="75" y="55" width="6" height="4" fill="#ed8936" />
+
+                        <rect x="97" y="30" width="6" height="40" rx="1" fill="#fbd38d" />
+                        <rect x="97" y="35" width="6" height="4" fill="#ed8936" />
+                        <rect x="97" y="45" width="6" height="4" fill="#ed8936" />
+                        <rect x="97" y="55" width="6" height="4" fill="#ed8936" />
+
+                        <rect x="119" y="40" width="6" height="30" rx="1" fill="#fbd38d" />
+                        <rect x="119" y="45" width="6" height="4" fill="#ed8936" />
+                        <rect x="119" y="55" width="6" height="4" fill="#ed8936" />
+
+                        <!-- Flames -->
+                        <g id="flames" class="transition-opacity duration-1000 ease-out">
+                            <!-- Left Flame -->
+                            <path class="flame" d="M78,35 Q75,25 78,15 Q81,25 78,35" fill="#fbbf24">
+                                <animate attributeName="d" values="M78,35 Q75,25 78,15 Q81,25 78,35; M78,35 Q81,25 78,10 Q75,25 78,35; M78,35 Q75,25 78,15 Q81,25 78,35" dur="0.6s" repeatCount="indefinite" />
+                            </path>
+                            <!-- Center Flame -->
+                            <path class="flame" d="M100,25 Q97,15 100,5 Q103,15 100,25" fill="#fbbf24">
+                                <animate attributeName="d" values="M100,25 Q97,15 100,5 Q103,15 100,25; M100,25 Q103,15 100,0 Q97,15 100,25; M100,25 Q97,15 100,5 Q103,15 100,25" dur="0.5s" repeatCount="indefinite" />
+                            </path>
+                            <!-- Right Flame -->
+                            <path class="flame" d="M122,35 Q119,25 122,15 Q125,25 122,35" fill="#fbbf24">
+                                <animate attributeName="d" values="M122,35 Q119,25 122,15 Q125,25 122,35; M122,35 Q125,25 122,10 Q119,25 122,35; M122,35 Q119,25 122,15 Q125,25 122,35" dur="0.7s" repeatCount="indefinite" />
+                            </path>
+                            <!-- Glow effects -->
+                            <circle cx="78" cy="25" r="12" fill="#fbbf24" opacity="0.3" filter="blur(4px)">
+                                <animate attributeName="opacity" values="0.2;0.4;0.2" dur="0.6s" repeatCount="indefinite" />
+                            </circle>
+                            <circle cx="100" cy="15" r="15" fill="#fbbf24" opacity="0.3" filter="blur(4px)">
+                                <animate attributeName="opacity" values="0.2;0.5;0.2" dur="0.5s" repeatCount="indefinite" />
+                            </circle>
+                            <circle cx="122" cy="25" r="12" fill="#fbbf24" opacity="0.3" filter="blur(4px)">
+                                <animate attributeName="opacity" values="0.2;0.4;0.2" dur="0.7s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+                    </svg>
+                </div>
+
+                <div id="wish-deployed" class="hidden mt-8">
+                    <p class="text-2xl md:text-3xl font-bold text-green-400 font-mono animate-pulse drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]">System Status: Wish Successfully Deployed! 🚀✨</p>
+                    <p class="text-pink-300 mt-4 text-xl font-['Gloria_Hallelujah']">Happy Birthday, Professor!</p>
+                </div>
+            </section>
+
+        </main>
+
+        <div class="max-w-6xl mx-auto w-full relative">
+            <div class="chalk-tray">
+                <div class="chalk-piece" style="left: 10%; background: #fff;"></div>
+                <div class="chalk-piece" style="left: 12%; background: #fef08a; top: -2px; transform: rotate(5deg);"></div>
+                <div class="chalk-piece" style="left: 80%; background: #bfdbfe;"></div>
+                <div class="absolute -top-6 left-[85%] w-16 h-8 bg-gray-800 border-b-4 border-gray-600 rounded shadow-lg transform rotate-3"></div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm mb-8">
+            <p> <i class="fas fa-heart text-red-400"></i></p>
+        </footer>
+
+        <div class="marquee-container fixed bottom-0 left-0 z-50">
+            <div id="server-log" class="marquee-content text-sm md:text-base">
+                <span class="mx-4 text-gray-300">[SYSTEM]: Starting Birthday Protocol...</span>
+                <span class="mx-4 text-yellow-400">[DIGITAL ELEC]: Logic levels set to HIGH (1)...</span>
+                <span class="mx-4 text-blue-400">[DSA]: Array of wishes sorted in O(n log n) time...</span>
+                <span class="mx-4 text-purple-400">[WEB DEV]: HTTP 200 OK - Birthday request successful...</span>
+                <span class="mx-4 text-green-400">[SOFTWARE ENG]: Passing all unit tests for 'Best Teacher' module...</span>
+                <span class="mx-4 text-pink-400">[LOG]: Best Professor Detected...</span>
+                <span class="mx-4 text-red-400">[WARNING]: High levels of Cake detected...</span>
+            </div>
+        </div>
+    
+    </div> 
+
+    <canvas id="confettiCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50"></canvas>
+
+    <script>
+        let uploadedImageSrc = null;
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageSrc = e.target.result;
+                    document.getElementById('upload-icon').className = 'fas fa-check-circle text-3xl text-green-400 mb-2';
+                    document.getElementById('upload-text').innerHTML = '<span class="text-green-300">Photo loaded successfully!</span>';
+                    
+                    // Clear any errors if they exist
+                    document.getElementById('upload-error').classList.add('hidden');
+                    document.getElementById('upload-container').classList.remove('border-red-500', 'bg-red-500/10');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') startCelebration();
+        }
+
+        function startCelebration() {
+            // Check if image is uploaded first
+            if (!uploadedImageSrc) {
+                document.getElementById('upload-error').classList.remove('hidden');
+                const uploadContainer = document.getElementById('upload-container');
+                uploadContainer.classList.remove('border-yellow-200');
+                uploadContainer.classList.add('border-red-500', 'bg-red-500/10');
+                return; // Stop execution until an image is provided
+            }
+
+            const inputName = document.getElementById('profNameInput').value.trim();
+            const profName = (inputName || "ABC ") + " Ma'am";
+
+            document.getElementById('prof-name-display').innerText = profName;
+            
+            const jsonProfName = document.getElementById('json-prof-name');
+            if(jsonProfName) jsonProfName.innerText = `"${profName}"`;
+            
+            if (uploadedImageSrc) {
+                const polaroidImg = document.getElementById('polaroid-image');
+                const polaroidIcon = document.getElementById('polaroid-icon');
+                polaroidImg.src = uploadedImageSrc;
+                polaroidImg.classList.remove('hidden');
+                polaroidIcon.classList.add('hidden');
+            }
+
+            document.getElementById('main-content').classList.remove('hidden');
+
+            const overlay = document.getElementById('intro-overlay');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+
+            setTimeout(() => {
+                typeWriter();
+                initConfetti();
+                initScrollAnimations();
+                
+                const indicator = document.getElementById('scroll-indicator');
+                if(indicator) indicator.classList.remove('opacity-0');
+            }, 500);
+        }
+
+        function flipCard(card) {
+            const inner = card.querySelector('.flashcard-inner');
+            inner.classList.toggle('is-flipped');
+        }
+
+        const textToType = 'curl -X GET https://api.life.com/v1/birthday/best-mentor';
+        const typeWriterElement = document.getElementById('typewriter');
+        const outputElement = document.getElementById('terminal-output');
+        let i = 0;
+
+        function typeWriter() {
+            if (i < textToType.length) {
+                typeWriterElement.innerHTML += textToType.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100); 
+            } else {
+                setTimeout(() => {
+                    outputElement.classList.remove('hidden');
+                }, 500);
+            }
+        }
+
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationId;
+        const symbols = ['SELECT', 'FROM', 'def', 'return', '{}', 'SQL', 'py', 'JOIN', '★', '🎂'];
+
+        let candlesBlownOut = false;
+        function blowOutCandles() {
+            if (candlesBlownOut) return; // Prevent multiple clicks
+            candlesBlownOut = true;
+            
+            // Fade out the flames
+            document.getElementById('flames').classList.add('opacity-0');
+            
+            // Swap the text prompts
+            document.getElementById('candle-instruction').classList.add('hidden');
+            document.getElementById('wish-deployed').classList.remove('hidden');
+            
+            // Trigger a beautiful fireworks confetti explosion using canvas-confetti
+            if (typeof confetti === 'function') {
+                const duration = 3000; // 3 seconds of continuous confetti
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    // Launch from left edge
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0, y: 0.8 },
+                        colors: ['#fbcfe8', '#fbd38d', '#a78bfa', '#60a5fa'],
+                        zIndex: 100
+                    });
+                    // Launch from right edge
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1, y: 0.8 },
+                        colors: ['#fbcfe8', '#fbd38d', '#a78bfa', '#60a5fa'],
+                        zIndex: 100
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+
+            // Also trigger an extra huge burst of our custom tech symbols from the top
+            for(let i=0; i<100; i++) {
+                particles.push(new Particle(false)); 
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height : -20;
+                this.size = Math.random() * 14 + 10; 
+                this.speedY = Math.random() * 1.5 + 0.5; 
+                this.speedX = Math.random() * 2 - 1;
+                
+                const colors = ['rgba(255,255,255,0.3)', 'rgba(254,240,138,0.4)', 'rgba(191,219,254,0.4)', 'rgba(251,207,232,0.4)'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 2 - 1;
+                this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.y * 0.05) * 0.5;
+                this.rotation += this.rotationSpeed;
+                
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.font = `${this.size}px 'Fira Code'`;
+                ctx.fillText(this.symbol, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function initConfetti() {
+            particles = [];
+            for(let i=0; i<60; i++) {
+                particles.push(new Particle(true));
+            }
+            animate();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for(let i=0; i<particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.15, 
+                rootMargin: "0px 0px -50px 0px"
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const elements = document.querySelectorAll('.reveal');
+            elements.forEach(el => observer.observe(el));
+        }
+
+        window.addEventListener('scroll', () => {
+            const indicator = document.getElementById('scroll-indicator');
+            if(indicator) {
+                if(window.scrollY > 100) {
+                    indicator.classList.add('opacity-0');
+                } else {
+                    indicator.classList.remove('opacity-0');
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
