@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Birthday, Professor</title>
+    <title>Happy Birthday,Nisha</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -313,10 +313,10 @@
                     <i class="fas fa-code text-white/20"></i> <!-- Web Dev icon -->
                 </div>
 
-                <h2 class="text-2xl md:text-3xl text-gray-300 mb-2 opacity-80">To my favorite mentor...</h2>
+                <h2 class="text-2xl md:text-3xl text-gray-300 mb-2 opacity-80">To best DSA teacher...</h2>
                 <h1 class="text-5xl md:text-7xl lg:text-8xl mb-6 chalk-text tracking-wider">
                     Happy Birthday <br>
-                    <span id="prof-name-display" class="text-yellow-200">ABC Ma'am</span>
+                    <span id="prof-name-display" class="text-yellow-200">Nisha Ma'am</span>
                 </h1>
                 
                 <div class="flex justify-center items-center space-x-2 text-xl md:text-2xl text-blue-200 mt-4">
@@ -585,7 +585,7 @@
                                     <i class="fas fa-check-circle"></i> Accepted Answer
                                 </div>
                                 <p class="text-gray-300 text-base md:text-lg leading-relaxed mt-2">
-                                    The most efficient solution is to attend <strong class="text-white">ABC Ma'am's</strong> classes. She compiles the hardest concepts directly into your brain with <code class="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-pink-400 font-mono text-sm border border-gray-700">0 errors</code>. 
+                                    The most efficient solution is to attend <strong class="text-white">Nisha Ma'am's</strong> classes. She compiles the hardest concepts directly into your brain with <code class="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-pink-400 font-mono text-sm border border-gray-700">0 errors</code>. 
                                 </p>
                                 <p class="text-gray-300 text-base md:text-lg leading-relaxed mt-3">
                                     Whether it's traversing a graph or building a full-stack app, she returns a <code class="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-yellow-300 font-mono text-sm border border-gray-700">Status: 200 OK</code> every single time!
@@ -609,14 +609,14 @@
                             <i id="polaroid-icon" class="fas fa-chalkboard-teacher text-6xl text-gray-400 z-10"></i>
                             <img id="polaroid-image" src="" alt="Professor" class="absolute inset-0 w-full h-full object-cover hidden z-20">
                          </div>
-                        <p class="font-bold font-serif text-lg">Best Mentor Ever</p>
+                        <p class="font-bold font-serif text-lg">Best DSA Teacher Ever</p>
                     </div>
                 </div>
 
                 <div class="sticky-note">
                     <h3 class="font-bold text-2xl mb-4 text-gray-800 border-b border-gray-400/30 pb-2">Dear Professor,</h3>
                     <p class="mb-4 text-gray-800 leading-relaxed text-xl">
-                        Wishing you a fantastic birthday. Thank you for demystifying complex queries and making Python code actually make sense. Your classes are always the highlight of week.
+                        Wishing you a fantastic birthday. Thank you for demystifying complex queries and making DSA code actually make sense. Your classes are always the highlight of week.
                     </p>
                     <p class="mb-6 text-gray-800 leading-relaxed text-xl">
                         May your day have zero runtime errors and infinite joy.
@@ -766,17 +766,16 @@
         }
 
         function startCelebration() {
-            // Check if image is uploaded first
             if (!uploadedImageSrc) {
                 document.getElementById('upload-error').classList.remove('hidden');
                 const uploadContainer = document.getElementById('upload-container');
                 uploadContainer.classList.remove('border-yellow-200');
                 uploadContainer.classList.add('border-red-500', 'bg-red-500/10');
-                return; // Stop execution until an image is provided
+                return; 
             }
 
             const inputName = document.getElementById('profNameInput').value.trim();
-            const profName = (inputName || "ABC ") + " Ma'am";
+            const profName = (inputName || "Nisha ") + " Ma'am";
 
             document.getElementById('prof-name-display').innerText = profName;
             
@@ -836,23 +835,19 @@
 
         let candlesBlownOut = false;
         function blowOutCandles() {
-            if (candlesBlownOut) return; // Prevent multiple clicks
+            if (candlesBlownOut) return;
             candlesBlownOut = true;
             
-            // Fade out the flames
             document.getElementById('flames').classList.add('opacity-0');
             
-            // Swap the text prompts
             document.getElementById('candle-instruction').classList.add('hidden');
             document.getElementById('wish-deployed').classList.remove('hidden');
             
-            // Trigger a beautiful fireworks confetti explosion using canvas-confetti
             if (typeof confetti === 'function') {
-                const duration = 3000; // 3 seconds of continuous confetti
+                const duration = 3000; 
                 const end = Date.now() + duration;
 
                 (function frame() {
-                    // Launch from left edge
                     confetti({
                         particleCount: 5,
                         angle: 60,
@@ -861,7 +856,6 @@
                         colors: ['#fbcfe8', '#fbd38d', '#a78bfa', '#60a5fa'],
                         zIndex: 100
                     });
-                    // Launch from right edge
                     confetti({
                         particleCount: 5,
                         angle: 120,
@@ -877,7 +871,6 @@
                 }());
             }
 
-            // Also trigger an extra huge burst of our custom tech symbols from the top
             for(let i=0; i<100; i++) {
                 particles.push(new Particle(false)); 
             }
